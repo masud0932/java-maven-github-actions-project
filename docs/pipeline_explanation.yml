@@ -1,0 +1,58 @@
+name: Java Maven CI/CD to AWS EC2
+
+on:
+  push: # Triggers the workflow on pushes to the main branch, allowing for automatic testing and deployment of changes when code is merged or directly pushed to main.
+    branches:
+      - main
+  pull_request: # Triggers the workflow on pull requests targeting the main branch, allowing for testing and deployment of changes before they are merged.
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering of the workflow from the GitHub Actions tab in the repository.
+
+jobs:
+  build-test-docker-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3 # GitHub Action name for Docker login, equal to docker login
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6 # GitHub Action name for building and pushing Docker images
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest 
+
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.2.0 # GitHub Action name for SSH, equal to ssh ec2-user@server
+        with:
+          host: ${{ secrets.EC2_HOST }} # EC2 instance public IP or hostname
+          username: ${{ secrets.EC2_USERNAME }} # EC2 instance username, e.g., ec2-user for Amazon Linux, ubuntu for Ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: | # multi-line script & Everything below this runs inside the EC2 server.
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest
+            docker stop java-maven-github-actions-project || true # Stop the oldcontainer if it's running, || true: ignore error if it doesn't exist, without this, Error: No such container and would fail deployment.
+            docker rm java-maven-github-actions-project || true # Deletes old stopped container so new one can be created.
+            docker run -d \   # Runs container in detached/background mode.
+              --name java-maven-github-actions-project \ # Names the container, making it easier to manage (stop, remove, etc.) in the future.
+              -p 8080:8080 \
+              --restart unless-stopped \ # Automatically restarts the container if it crashes or the server reboots, unless you explicitly stop it.
+              ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest # Final line specifies which Docker image to run.

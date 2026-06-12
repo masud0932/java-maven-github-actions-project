@@ -28,31 +28,31 @@ jobs:
         run: mvn -B package --file pom.xml
 
       - name: Log in to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v3 
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v6 
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest 
 
       - name: Deploy to AWS EC2
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.0 
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
+          host: ${{ secrets.EC2_HOST }} 
+          username: ${{ secrets.EC2_USERNAME }} 
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+          script: | 
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest
-            docker stop java-maven-github-actions-project || true
-            docker rm java-maven-github-actions-project || true
-            docker run -d \
-              --name java-maven-project \
+            docker stop java-maven-github-actions-project || true 
+            docker rm java-maven-github-actions-project || true 
+            docker run -d \   
+              --name java-maven-github-actions-project \ 
               -p 8080:8080 \
-              --restart unless-stopped \
-              ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest
+              --restart unless-stopped \ 
+              ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest 
