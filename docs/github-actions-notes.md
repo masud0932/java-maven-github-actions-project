@@ -143,7 +143,7 @@ jobs:
 | `bridgecrewio/checkov-action@master`   | DevSecOps                | IaC security scanning for Terraform/K8s          |
 
 
-# Use of usages and run 
+# Use of uses and run 
 
 | Keyword | Used For                        | What It Does                                                                        | Example                     |
 | ------- | ------------------------------- | ----------------------------------------------------------------------------------- | --------------------------- |
