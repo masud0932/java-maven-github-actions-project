@@ -36,10 +36,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-project:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-project:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-github-actions-project:latest
 
       - name: Deploy to AWS EC2
         uses: appleboy/ssh-action@v1.2.0
