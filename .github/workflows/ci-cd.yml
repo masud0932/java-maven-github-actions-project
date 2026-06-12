@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-test-docker-deploy:
@@ -35,8 +38,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-demo:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-demo:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-project:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-project:${{ github.sha }}
 
       - name: Deploy to AWS EC2
         uses: appleboy/ssh-action@v1.2.0
@@ -45,11 +48,11 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-demo:latest
-            docker stop java-maven-demo || true
-            docker rm java-maven-demo || true
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-project:latest
+            docker stop java-maven-project || true
+            docker rm java-maven-project || true
             docker run -d \
-              --name java-maven-demo \
+              --name java-maven-project \
               -p 8080:8080 \
               --restart unless-stopped \
-              ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-demo:latest
+              ${{ secrets.DOCKERHUB_USERNAME }}/java-maven-project:latest
